@@ -2,33 +2,38 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
 
-namespace SpamBlocker.Utils
+using SpamBlocker.Models;
+
+namespace SpamBlocker.Utils;
+
+public static class NotificationUtils
 {
-    public static class NotificationUtils
+    private const string LogCategory = "Notifications";
+    private const string AdminPermission = "@css/admin";
+
+    public static void NotifyPlayer(CCSPlayerController player, string message, BasePlugin plugin)
     {
-        public static void NotifyAdmins(string message, BasePlugin plugin, string adminPermission = "@css/admin")
-        {
-            var admins = Utilities.GetPlayers().Where(p => p.IsValid && !p.IsBot && !p.IsHLTV && AdminManager.PlayerHasPermissions(p, adminPermission)).ToList();
-            foreach (var admin in admins)
-            {
-                admin.PrintToChat($"{plugin.Localizer["prefix"]} {message}");
-            }
+        if (!player.IsValid)
+            return;
 
-            LoggingUtils.LogInfo(message);
+        player.PrintToChat($"{plugin.Localizer["prefix"]} {message}");
+    }
+
+    public static void NotifyAdminsOfViolation(BasePlugin plugin, ViolationNotice notice)
+    {
+        var message = $"{notice.ActionText} {plugin.Localizer["violation_by"]} {notice.PlayerName}: " +
+                      $"{notice.Result.Reason} ('{notice.Result.DetectedContent}')";
+        NotifyAdmins(plugin, message);
+    }
+
+    private static void NotifyAdmins(BasePlugin plugin, string message)
+    {
+        foreach (var player in Utilities.GetPlayers())
+        {
+            if (PlayerUtils.IsValidPlayer(player) && AdminManager.PlayerHasPermissions(player, AdminPermission))
+                player.PrintToChat($"{plugin.Localizer["prefix"]} {message}");
         }
 
-        public static void NotifyPlayer(CCSPlayerController player, string message, BasePlugin plugin)
-        {
-            if (player == null || !player.IsValid)
-                return;
-
-            player.PrintToChat($"{plugin.Localizer["prefix"]} {message}");
-        }
-
-        public static void NotifyAdminsViolation(string playerName, string violationType, string reason, string detectedContent, BasePlugin plugin, string adminPermission = "@css/admin")
-        {
-            string message = $"{violationType} {plugin.Localizer["violation_by"]} {playerName}: {reason} ('{detectedContent}')";
-            NotifyAdmins(message, plugin, adminPermission);
-        }
+        Logger.LogInfo(LogCategory, message);
     }
 }

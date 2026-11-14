@@ -170,7 +170,7 @@ namespace SpamBlocker.Managers
             if (_config.ChatProtection.NotifyAdmins)
             {
                 var chatTypeKey = isTeamChat ? "team_chat" : "public_chat";
-                NotificationUtils.NotifyAdminsViolation(player.PlayerName, _plugin.Localizer["admin_blocked_message", chatTypeKey], filterResult.Reason, filterResult.DetectedContent, _plugin);
+                NotificationUtils.NotifyAdminsOfViolation(_plugin, new ViolationNotice(_plugin.Localizer["admin_blocked_message", chatTypeKey], player.PlayerName, filterResult));
             }
 
             var source = isTeamChat ? ViolationSource.TeamChat : ViolationSource.Chat;
@@ -189,7 +189,7 @@ namespace SpamBlocker.Managers
                     {
                         if (player.IsValid)
                         {
-                            CommandUtils.ExecuteCommand(_config.ChatProtection.KickCommand, player, _config);
+                            CommandUtils.ExecuteCommand(_config.ChatProtection.KickCommand, player);
                         }
                     });
                     break;
@@ -199,7 +199,7 @@ namespace SpamBlocker.Managers
                     {
                         if (player.IsValid)
                         {
-                            CommandUtils.ExecuteCommand(_config.ChatProtection.BanCommand, player, _config);
+                            CommandUtils.ExecuteCommand(_config.ChatProtection.BanCommand, player);
                         }
                     });
                     break;
@@ -211,7 +211,7 @@ namespace SpamBlocker.Managers
                         {
                             if (player.IsValid)
                             {
-                                CommandUtils.ExecuteCommand(_config.ChatProtection.CustomCommand, player, _config);
+                                CommandUtils.ExecuteCommand(_config.ChatProtection.CustomCommand, player);
                             }
                         });
                     }

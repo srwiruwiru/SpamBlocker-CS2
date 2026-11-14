@@ -1,54 +1,58 @@
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 
-using SpamBlocker.Configs;
+namespace SpamBlocker.Utils;
 
-namespace SpamBlocker.Utils
+public static class CommandUtils
 {
-    public static class CommandUtils
+    private const string LogCategory = "Commands";
+    private const string UserIdPlaceholder = "{userid}";
+    private const string SteamIdPlaceholder = "{steamid}";
+    private const string NamePlaceholder = "{name}";
+    private const string SlotPlaceholder = "{slot}";
+    private const string AdminCommandPrefix = "@";
+
+    private static readonly string[] CommandPrefixes = ["!", "@", "/", "."];
+
+    public static void ExecuteCommand(string commandTemplate, CCSPlayerController player)
     {
-        public static void ExecuteCommand(string commandTemplate, CCSPlayerController player, BaseConfig config)
+        if (string.IsNullOrEmpty(commandTemplate) || !player.IsValid)
+            return;
+
+        try
         {
-            if (string.IsNullOrEmpty(commandTemplate) || player == null || !player.IsValid)
-                return;
+            var command = SubstitutePlaceholders(commandTemplate, player);
+            Logger.LogDebug(LogCategory, $"Executing command: {command}");
+            Server.ExecuteCommand(command);
+        }
+        catch (Exception exception)
+        {
+            Logger.LogError(LogCategory, $"Error executing command '{commandTemplate}': {exception.Message}");
+        }
+    }
 
-            try
-            {
-                string command = SubstitutePlaceholders(commandTemplate, player);
-
-                LoggingUtils.LogDebug($"Executing command: {command}", config);
-                Server.ExecuteCommand(command);
-            }
-            catch (Exception ex)
-            {
-                LoggingUtils.LogError($"Error executing command '{commandTemplate}': {ex.Message}");
-            }
+    public static bool IsCommand(string message)
+    {
+        foreach (var prefix in CommandPrefixes)
+        {
+            if (message.StartsWith(prefix, StringComparison.Ordinal))
+                return true;
         }
 
-        public static string SubstitutePlaceholders(string template, CCSPlayerController player)
-        {
-            if (string.IsNullOrEmpty(template) || player == null || !player.IsValid)
-                return template;
+        return false;
+    }
 
-            return template
-                .Replace("{userid}", player.UserId?.ToString() ?? "")
-                .Replace("{steamid}", player.AuthorizedSteamID?.SteamId64.ToString() ?? "")
-                .Replace("{name}", player.PlayerName ?? "")
-                .Replace("{slot}", player.Slot.ToString());
-        }
+    public static bool IsAdminCommand(string message)
+    {
+        return message.StartsWith(AdminCommandPrefix, StringComparison.Ordinal);
+    }
 
-        public static bool IsCommand(string message)
-        {
-            if (string.IsNullOrEmpty(message))
-                return false;
-
-            return message.StartsWith("!") || message.StartsWith("@") ||
-                   message.StartsWith("/") || message.StartsWith(".");
-        }
-
-        public static bool IsAdminCommand(string message)
-        {
-            return !string.IsNullOrEmpty(message) && message.StartsWith("@");
-        }
+    private static string SubstitutePlaceholders(string template, CCSPlayerController player)
+    {
+        return template
+            .Replace(UserIdPlaceholder, player.UserId?.ToString() ?? "")
+            .Replace(SteamIdPlaceholder, player.AuthorizedSteamID?.SteamId64.ToString() ?? "")
+            .Replace(NamePlaceholder, player.PlayerName ?? "")
+            .Replace(SlotPlaceholder, player.Slot.ToString());
     }
 }

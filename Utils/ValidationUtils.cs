@@ -1,133 +1,118 @@
 using System.Text.RegularExpressions;
 
-namespace SpamBlocker.Utils
+namespace SpamBlocker.Utils;
+
+public static class ValidationUtils
 {
-    public static class ValidationUtils
+    private const int IpOctetCount = 4;
+    private const int MaxOctetValue = 255;
+    private const int MinTopLevelDomainLength = 2;
+    private const int MinUrlLength = 4;
+    private const char DomainSeparator = '.';
+    private const string LeadingZero = "0";
+    private const string ProtocolSeparator = "://";
+    private const string WwwPrefix = "www.";
+    private const string DefaultScheme = "http://";
+
+    private static readonly string[] KnownSchemes = ["http://", "https://", "steam://"];
+    private static readonly Regex LetterRegex = new("[a-zA-Z]", RegexOptions.Compiled);
+    private static readonly Regex OnlyLettersRegex = new("^[a-zA-Z]+$", RegexOptions.Compiled);
+    private static readonly Regex OnlyDigitsAndDotsRegex = new(@"^[\d\.]+$", RegexOptions.Compiled);
+    private static readonly Regex VersionNumberRegex = new(@"^\d+\.\d+(\.\d+)?$", RegexOptions.Compiled);
+
+    public static bool IsValidIpAddress(string ip)
     {
-        public static bool IsValidIpAddress(string ip)
-        {
-            if (string.IsNullOrWhiteSpace(ip))
-                return false;
-
-            var parts = ip.Split('.');
-            if (parts.Length != 4)
-                return false;
-
-            foreach (var part in parts)
-            {
-                if (!int.TryParse(part, out int value) || value < 0 || value > 255)
-                    return false;
-
-                if (part.Length > 1 && part.StartsWith("0"))
-                    return false;
-            }
-
-            return true;
-        }
-
-        public static bool IsValidDomainFormat(string domain)
-        {
-            if (string.IsNullOrWhiteSpace(domain))
-                return false;
-
-            if (!domain.Contains('.'))
-                return false;
-
-            if (!Regex.IsMatch(domain, @"[a-zA-Z]"))
-                return false;
-
-            if (Regex.IsMatch(domain, @"^[\d\.]+$"))
-                return false;
-
-            var parts = domain.Split('.');
-            if (parts.Length < 2)
-                return false;
-
-            var tld = parts[parts.Length - 1];
-            if (tld.Length < 2 || !Regex.IsMatch(tld, @"^[a-zA-Z]+$"))
-                return false;
-
-            return true;
-        }
-
-        public static bool IsNotRealUrl(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-                return true;
-
-            if (Regex.IsMatch(url, @"^\d+\.\d+$"))
-                return true;
-
-            if (Regex.IsMatch(url, @"^\d+\.\d+\.\d+$"))
-                return true;
-
-            if (url.Length < 4)
-                return true;
-
-            if (!Regex.IsMatch(url, @"[a-zA-Z]"))
-                return true;
-
+        if (string.IsNullOrWhiteSpace(ip))
             return false;
+
+        var octets = ip.Split(DomainSeparator);
+        if (octets.Length != IpOctetCount)
+            return false;
+
+        foreach (var octet in octets)
+        {
+            if (!IsValidOctet(octet))
+                return false;
         }
 
-        public static bool IsAllowedProtocol(string url, List<string> allowedProtocols)
-        {
-            foreach (var protocol in allowedProtocols)
-            {
-                if (url.StartsWith($"{protocol}://", StringComparison.OrdinalIgnoreCase))
-                    return true;
-            }
+        return true;
+    }
 
-            if (!url.Contains("://"))
+    public static bool IsAllowedProtocol(string url, List<string> allowedProtocols)
+    {
+        foreach (var protocol in allowedProtocols)
+        {
+            if (url.StartsWith(protocol + ProtocolSeparator, StringComparison.OrdinalIgnoreCase))
                 return true;
-
-            return false;
         }
 
-        public static bool IsInDomainList(string domain, List<string> domainList)
+        return !url.Contains(ProtocolSeparator);
+    }
+
+    public static bool IsInDomainList(string domain, List<string> domainList)
+    {
+        foreach (var listDomain in domainList)
         {
-            foreach (var listDomain in domainList)
-            {
-                if (string.IsNullOrWhiteSpace(listDomain))
-                    continue;
+            if (string.IsNullOrWhiteSpace(listDomain))
+                continue;
 
-                var cleanListDomain = listDomain.ToLowerInvariant().Replace("www.", "");
+            var cleanListDomain = listDomain.ToLowerInvariant().Replace(WwwPrefix, "");
+            if (domain == cleanListDomain || domain.EndsWith(DomainSeparator + cleanListDomain))
+                return true;
+        }
 
-                if (domain == cleanListDomain)
-                    return true;
+        return false;
+    }
 
-                if (domain.EndsWith("." + cleanListDomain))
-                    return true;
-            }
+    public static string? FindDomain(string url)
+    {
+        if (!IsLikelyUrl(url))
+            return null;
 
+        var absoluteUrl = HasKnownScheme(url) ? url : DefaultScheme + url;
+        if (!Uri.TryCreate(absoluteUrl, UriKind.Absolute, out var uri))
+            return null;
+
+        var domain = uri.Host.ToLowerInvariant();
+        if (IsValidIpAddress(domain) || !IsValidDomainFormat(domain))
+            return null;
+
+        return domain;
+    }
+
+    private static bool IsValidOctet(string octet)
+    {
+        if (!int.TryParse(octet, out var value) || value < 0 || value > MaxOctetValue)
             return false;
-        }
 
-        public static string ExtractDomain(string url)
+        return octet.Length == 1 || !octet.StartsWith(LeadingZero);
+    }
+
+    private static bool IsValidDomainFormat(string domain)
+    {
+        if (!domain.Contains(DomainSeparator) || !LetterRegex.IsMatch(domain) || OnlyDigitsAndDotsRegex.IsMatch(domain))
+            return false;
+
+        var topLevelDomain = domain[(domain.LastIndexOf(DomainSeparator) + 1)..];
+        return topLevelDomain.Length >= MinTopLevelDomainLength && OnlyLettersRegex.IsMatch(topLevelDomain);
+    }
+
+    private static bool IsLikelyUrl(string url)
+    {
+        if (string.IsNullOrWhiteSpace(url) || url.Length < MinUrlLength)
+            return false;
+
+        return !VersionNumberRegex.IsMatch(url) && LetterRegex.IsMatch(url);
+    }
+
+    private static bool HasKnownScheme(string url)
+    {
+        foreach (var scheme in KnownSchemes)
         {
-            try
-            {
-                if (IsNotRealUrl(url))
-                    return string.Empty;
-
-                if (!url.StartsWith("http://") && !url.StartsWith("https://") && !url.StartsWith("steam://"))
-                    url = "http://" + url;
-
-                var uri = new Uri(url);
-                var domain = uri.Host.ToLowerInvariant();
-
-                if (IsValidIpAddress(domain))
-                    return string.Empty;
-
-                if (!IsValidDomainFormat(domain))
-                    return string.Empty;
-
-                return domain;
-            }
-            catch
-            {
-                return string.Empty;
-            }
+            if (url.StartsWith(scheme, StringComparison.Ordinal))
+                return true;
         }
+
+        return false;
     }
 }

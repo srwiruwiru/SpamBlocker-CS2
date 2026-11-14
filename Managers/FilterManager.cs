@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Admin;
 
 using SpamBlocker.Configs;
+using SpamBlocker.Models;
 using SpamBlocker.Utils;
 
 namespace SpamBlocker.Managers
@@ -227,30 +228,10 @@ namespace SpamBlocker.Managers
                 var url = match.Value;
                 LoggingUtils.LogDebug($"Processing URL: '{url}'", _config);
 
-                if (ValidationUtils.IsNotRealUrl(url))
-                {
-                    LoggingUtils.LogDebug($"'{url}' is not a real URL - skipping", _config);
-                    continue;
-                }
-
-                var domain = ValidationUtils.ExtractDomain(url);
-                if (string.IsNullOrEmpty(domain))
+                var domain = ValidationUtils.FindDomain(url);
+                if (domain == null)
                 {
                     LoggingUtils.LogDebug($"Could not extract domain from URL: {url}", _config);
-                    continue;
-                }
-
-                LoggingUtils.LogDebug($"Extracted domain: '{domain}'", _config);
-
-                if (ValidationUtils.IsValidIpAddress(domain))
-                {
-                    LoggingUtils.LogDebug($"Domain '{domain}' is actually an IP address - skipping URL filter", _config);
-                    continue;
-                }
-
-                if (!ValidationUtils.IsValidDomainFormat(domain))
-                {
-                    LoggingUtils.LogDebug($"Domain '{domain}' has invalid format - skipping", _config);
                     continue;
                 }
 
@@ -424,13 +405,9 @@ namespace SpamBlocker.Managers
 
                 if (_config.NameProtection.NotifyAdmins)
                 {
-                    NotificationUtils.NotifyAdminsViolation(
-                        newName,
-                        _plugin.Localizer["admin_name_change"],
-                        result.Reason,
-                        result.DetectedContent,
-                        _plugin
-                    );
+                    NotificationUtils.NotifyAdminsOfViolation(
+                        _plugin,
+                        new ViolationNotice(_plugin.Localizer["admin_name_change"], newName, result));
                 }
             }
             else
