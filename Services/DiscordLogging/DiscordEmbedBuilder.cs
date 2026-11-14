@@ -55,8 +55,7 @@ public sealed class DiscordEmbedBuilder(IStringLocalizer localizer, DiscordLoggi
 
     private object[] BuildFields(ViolationReport report)
     {
-        var playerName = RemoveReadyTags(report.PlayerName);
-        var playerValue = $"**{GetText("discord_name")}** [{playerName}]({SteamProfileUrl}{report.SteamId})\n" +
+        var playerValue = $"**{GetText("discord_name")}** {FormatPlayerName(report)}\n" +
                           $"**{GetText("discord_steamid")}** {report.SteamId}";
 
         return
@@ -66,6 +65,12 @@ public sealed class DiscordEmbedBuilder(IStringLocalizer localizer, DiscordLoggi
             new { name = $"{ReasonIcon} {GetText("discord_reason")}", value = GetText(BlockReasonUtils.GetLangKey(report.Result.Reason)), inline = true },
             new { name = $"{DetectedContentIcon} {GetText("discord_detected_content")}", value = $"`{report.Result.DetectedContent}`", inline = false }
         ];
+    }
+
+    private string FormatPlayerName(ViolationReport report)
+    {
+        var playerName = RemoveReadyTags(report.PlayerName);
+        return config.IncludeSteamProfile ? $"[{playerName}]({SteamProfileUrl}{report.SteamId})" : playerName;
     }
 
     private string GetSourceLabel(ViolationSource source)

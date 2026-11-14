@@ -32,6 +32,7 @@ SpamBlocker is an advanced filtering and protection system that provides compreh
 | `embed_color`     | Hex color for Discord embeds. (**Default**: `"#ff0000"`)                                        | **YES**  |
 | `mention_role_id` | Discord role ID to mention on violations. (**Default**: `""`)                                   | **NO**   |
 | `server_name`     | Server name to display in Discord embeds. (**Default**: `"SpamBlocker Server"`)                 | **YES**  |
+| `include_steam_profile` | Link the player name to their Steam profile in Discord embeds. (**Default**: `true`)      | **YES**  |
 | `log_word_violations` | Log blacklisted word violations to Discord. (**Default**: `true`)                           | **YES**  |
 | `log_url_violations` | Log blocked URL violations to Discord. (**Default**: `true`)                                 | **YES**  |
 | `log_ip_violations` | Log blocked IP violations to Discord. (**Default**: `true`)                                   | **YES**  |
