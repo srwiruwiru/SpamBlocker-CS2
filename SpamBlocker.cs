@@ -16,7 +16,7 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
     private const string LogCategory = "Core";
 
     public override string ModuleName => "SpamBlocker";
-    public override string ModuleVersion => "1.0.8";
+    public override string ModuleVersion => "2.0.0";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Advanced spam and content filtering plugin with Discord integration";
 
