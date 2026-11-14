@@ -27,6 +27,7 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
     public void OnConfigParsed(BaseConfig config)
     {
         Config = config;
+        Utils.Logger.Config = config;
         LoggingUtils.LogInfo("Configuration parsed and loaded");
 
         if (_discordService != null)
