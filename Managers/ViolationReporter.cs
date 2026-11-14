@@ -3,12 +3,12 @@ using CounterStrikeSharp.API.Modules.Cvars;
 
 using SpamBlocker.Configs;
 using SpamBlocker.Models;
-using SpamBlocker.Services;
+using SpamBlocker.Services.DiscordLogging;
 using SpamBlocker.Utils;
 
 namespace SpamBlocker.Managers;
 
-public sealed class ViolationReporter(BaseConfig config, DiscordService? discordService)
+public sealed class ViolationReporter(BaseConfig config, DiscordLoggingService discordLogging)
 {
     private const string LogCategory = "Violations";
     private const string HostnameConVar = "hostname";
@@ -40,10 +40,10 @@ public sealed class ViolationReporter(BaseConfig config, DiscordService? discord
 
     private void SendToDiscord(ViolationReport report)
     {
-        if (discordService == null) return;
+        if (!discordLogging.IsActive) return;
 
         var serverName = GetServerName();
-        Task.Run(() => discordService.SendViolationAsync(report, serverName));
+        Task.Run(() => discordLogging.SendViolationAsync(report, serverName));
     }
 
     private string GetServerName()

@@ -6,7 +6,7 @@ using SpamBlocker.Utils;
 using SpamBlocker.Configs;
 using SpamBlocker.Managers;
 using SpamBlocker.Models;
-using SpamBlocker.Services;
+using SpamBlocker.Services.DiscordLogging;
 using EventHandler = SpamBlocker.Events.EventHandler;
 
 namespace SpamBlocker;
@@ -23,7 +23,7 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
     private FilterManager? _filterManager;
     private ChatManager? _chatManager;
     private EventHandler? _eventHandler;
-    private DiscordService? _discordService;
+    private DiscordLoggingService? _discordLogging;
     private ViolationReporter? _violationReporter;
 
     public void OnConfigParsed(BaseConfig config)
@@ -61,27 +61,16 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
     {
         LoggingUtils.LogDebug("Initializing services...", Config);
 
-        InitializeDiscordService();
+        _discordLogging = new DiscordLoggingService(this, Config);
+        if (_discordLogging.ShouldEnable())
+            _discordLogging.Enable();
 
-        _violationReporter = new ViolationReporter(Config, _discordService);
+        _violationReporter = new ViolationReporter(Config, _discordLogging);
         _filterManager = new FilterManager(Config, this);
         _chatManager = new ChatManager(_filterManager, _violationReporter, Config, this);
         _eventHandler = new EventHandler(_filterManager, _violationReporter, Config);
 
         LoggingUtils.LogDebug("All services initialized successfully", Config);
-    }
-
-    private void InitializeDiscordService()
-    {
-        if (Config.DiscordLogging.Enabled && !string.IsNullOrEmpty(Config.DiscordLogging.WebhookUrl))
-        {
-            _discordService = new DiscordService(Config, Localizer);
-            LoggingUtils.LogInfo("Discord logging service initialized");
-        }
-        else
-        {
-            LoggingUtils.LogDebug("Discord logging disabled", Config);
-        }
     }
 
     private void RegisterAllEvents()
@@ -138,13 +127,13 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
         {
             _filterManager?.ClearCache();
 
-            _discordService?.Dispose();
+            _discordLogging?.Disable();
 
             _violationReporter = null;
             _filterManager = null;
             _chatManager = null;
             _eventHandler = null;
-            _discordService = null;
+            _discordLogging = null;
 
             LoggingUtils.LogInfo("SpamBlocker unloaded successfully");
         }

@@ -1,0 +1,104 @@
+using System.Globalization;
+using System.Text.Json;
+using Microsoft.Extensions.Localization;
+
+using SpamBlocker.Configs;
+using SpamBlocker.Models;
+
+namespace SpamBlocker.Services.DiscordLogging;
+
+public sealed class DiscordEmbedBuilder(IStringLocalizer localizer, DiscordLoggingConfig config)
+{
+    private const int DefaultEmbedColor = 0xFF0000;
+    private const string HexColorPrefix = "#";
+    private const string ServerNamePlaceholder = "{0}";
+    private const string TimestampFormat = "yyyy-MM-ddTHH:mm:ss.fffZ";
+    private const string SteamProfileUrl = "https://steamcommunity.com/profiles/";
+    private const string TitleIcon = "🚨";
+    private const string PlayerIcon = "🎯";
+    private const string ViolationTypeIcon = "⚠️";
+    private const string ReasonIcon = "📝";
+    private const string DetectedContentIcon = "🔍";
+    private const string ChatIcon = "💬";
+    private const string NameIcon = "👤";
+
+    private static readonly string[] ReadyTags = ["[Ready]", "[No Ready]", "[READY]", "[NOT READY]"];
+    private static readonly JsonSerializerOptions SerializerOptions = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    public string BuildPayloadJson(ViolationReport report, string serverName)
+    {
+        var payload = new
+        {
+            content = BuildRoleMention(),
+            embeds = new[] { BuildEmbed(report, serverName) }
+        };
+
+        return JsonSerializer.Serialize(payload, SerializerOptions);
+    }
+
+    private object BuildEmbed(ViolationReport report, string serverName)
+    {
+        return new
+        {
+            title = $"{TitleIcon} {GetText("discord_violation_title")}",
+            description = GetText("discord_violation_description").Replace(ServerNamePlaceholder, serverName),
+            color = ParseEmbedColor(),
+            fields = BuildFields(report),
+            footer = new { text = GetText("discord_footer_text") },
+            timestamp = report.Timestamp.ToString(TimestampFormat)
+        };
+    }
+
+    private object[] BuildFields(ViolationReport report)
+    {
+        var playerName = RemoveReadyTags(report.PlayerName);
+        var playerValue = $"**{GetText("discord_name")}** [{playerName}]({SteamProfileUrl}{report.SteamId})\n" +
+                          $"**{GetText("discord_steamid")}** {report.SteamId}";
+
+        return
+        [
+            new { name = $"{PlayerIcon} {GetText("discord_player")}", value = playerValue, inline = false },
+            new { name = $"{ViolationTypeIcon} {GetText("discord_violation_type")}", value = GetSourceLabel(report.Source), inline = true },
+            new { name = $"{ReasonIcon} {GetText("discord_reason")}", value = report.Result.Reason, inline = true },
+            new { name = $"{DetectedContentIcon} {GetText("discord_detected_content")}", value = $"`{report.Result.DetectedContent}`", inline = false }
+        ];
+    }
+
+    private string GetSourceLabel(ViolationSource source)
+    {
+        return source switch
+        {
+            ViolationSource.Chat => $"{ChatIcon} {GetText("discord_violation_chat")}",
+            ViolationSource.TeamChat => $"{ChatIcon} {GetText("discord_violation_team_chat")}",
+            ViolationSource.Name => $"{NameIcon} {GetText("discord_violation_name")}",
+            _ => $"{ViolationTypeIcon} {source}"
+        };
+    }
+
+    private string BuildRoleMention()
+    {
+        return string.IsNullOrEmpty(config.MentionRoleId) ? "" : $"<@&{config.MentionRoleId}>";
+    }
+
+    private int ParseEmbedColor()
+    {
+        var hex = config.EmbedColor.StartsWith(HexColorPrefix) ? config.EmbedColor[HexColorPrefix.Length..] : config.EmbedColor;
+        return int.TryParse(hex, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var color) ? color : DefaultEmbedColor;
+    }
+
+    private string GetText(string key)
+    {
+        return localizer[key].Value;
+    }
+
+    private static string RemoveReadyTags(string playerName)
+    {
+        foreach (var tag in ReadyTags)
+            playerName = playerName.Replace(tag, "");
+
+        return playerName.Trim();
+    }
+}
