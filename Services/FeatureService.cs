@@ -5,7 +5,6 @@ using CounterStrikeSharp.API.Modules.Events;
 
 using SpamBlocker.Configs;
 using SpamBlocker.Utils;
-using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace SpamBlocker.Services;
 
@@ -62,12 +61,18 @@ public abstract class FeatureService(FeatureContext context)
 
     protected void RunNextFrame(Action callback)
     {
-        Server.NextFrame(callback);
+        Server.NextFrame(() => RunIfActive(callback));
     }
 
     protected void RunAfter(float delaySeconds, Action callback)
     {
-        _ = new Timer(delaySeconds, callback);
+        Plugin.AddTimer(delaySeconds, () => RunIfActive(callback));
+    }
+
+    private void RunIfActive(Action callback)
+    {
+        if (IsActive)
+            callback();
     }
 
     private void ReleaseResources()
