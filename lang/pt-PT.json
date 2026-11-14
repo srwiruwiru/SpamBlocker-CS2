@@ -12,7 +12,6 @@
   "discord_player": "Jogador",
   "discord_name": "Nome:",
   "discord_steamid": "SteamID:",
-  "discord_violation_type": "Tipo de Violação",
   "discord_reason": "Motivo",
   "discord_detected_content": "Conteúdo Detectado",
   "discord_time": "Hora",
@@ -23,12 +22,9 @@
   "discord_footer_text": "Sistema SpamBlocker",
   
   "discord_violation_blacklisted_word": "Palavra Proibida",
-  "discord_violation_chat": "Violação de Chat",
-  "discord_violation_team_chat": "Violação de Chat da Equipe",
   "discord_violation_blocked_url": "URL Bloqueada",
   "discord_violation_blocked_ip": "IP Bloqueado",
   "discord_violation_blacklisted_name": "Nome Proibido",
-  "discord_violation_name": "Violação de Nome",
 
   "reason_blacklisted_word": "Palavra proibida detectada",
   "reason_ip_port_not_whitelisted": "IP:Porta fora da lista de permissões",

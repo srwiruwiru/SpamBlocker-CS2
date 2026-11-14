@@ -12,7 +12,6 @@
   "discord_player": "Игрок",
   "discord_name": "Имя:",
   "discord_steamid": "SteamID:",
-  "discord_violation_type": "Тип Нарушения",
   "discord_reason": "Причина",
   "discord_detected_content": "Обнаруженное Содержание",
   "discord_time": "Время",
@@ -23,12 +22,9 @@
   "discord_footer_text": "Система SpamBlocker",
   
   "discord_violation_blacklisted_word": "Запрещенное Слово",
-  "discord_violation_chat": "Нарушение Чата",
-  "discord_violation_team_chat": "Нарушение Командного Чата",
   "discord_violation_blocked_url": "Заблокированный URL",
   "discord_violation_blocked_ip": "Заблокированный IP",
   "discord_violation_blacklisted_name": "Запрещенное Имя",
-  "discord_violation_name": "Нарушение Имени",
 
   "reason_blacklisted_word": "Обнаружено запрещенное слово",
   "reason_ip_port_not_whitelisted": "IP:порт не в белом списке",

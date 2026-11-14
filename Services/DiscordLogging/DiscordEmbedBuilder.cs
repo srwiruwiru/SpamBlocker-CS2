@@ -17,11 +17,8 @@ public sealed class DiscordEmbedBuilder(IStringLocalizer localizer, DiscordLoggi
     private const string SteamProfileUrl = "https://steamcommunity.com/profiles/";
     private const string TitleIcon = "🚨";
     private const string PlayerIcon = "🎯";
-    private const string ViolationTypeIcon = "⚠️";
     private const string ReasonIcon = "📝";
     private const string DetectedContentIcon = "🔍";
-    private const string ChatIcon = "💬";
-    private const string NameIcon = "👤";
 
     private static readonly string[] ReadyTags = ["[Ready]", "[No Ready]", "[READY]", "[NOT READY]"];
     private static readonly JsonSerializerOptions SerializerOptions = new()
@@ -61,7 +58,6 @@ public sealed class DiscordEmbedBuilder(IStringLocalizer localizer, DiscordLoggi
         return
         [
             new { name = $"{PlayerIcon} {GetText("discord_player")}", value = playerValue, inline = false },
-            new { name = $"{ViolationTypeIcon} {GetText("discord_violation_type")}", value = GetSourceLabel(report.Source), inline = true },
             new { name = $"{ReasonIcon} {GetText("discord_reason")}", value = GetText(BlockReasonUtils.GetLangKey(report.Result.Reason)), inline = true },
             new { name = $"{DetectedContentIcon} {GetText("discord_detected_content")}", value = $"`{report.Result.DetectedContent}`", inline = false }
         ];
@@ -71,17 +67,6 @@ public sealed class DiscordEmbedBuilder(IStringLocalizer localizer, DiscordLoggi
     {
         var playerName = RemoveReadyTags(report.PlayerName);
         return config.IncludeSteamProfile ? $"[{playerName}]({SteamProfileUrl}{report.SteamId})" : playerName;
-    }
-
-    private string GetSourceLabel(ViolationSource source)
-    {
-        return source switch
-        {
-            ViolationSource.Chat => $"{ChatIcon} {GetText("discord_violation_chat")}",
-            ViolationSource.TeamChat => $"{ChatIcon} {GetText("discord_violation_team_chat")}",
-            ViolationSource.Name => $"{NameIcon} {GetText("discord_violation_name")}",
-            _ => $"{ViolationTypeIcon} {source}"
-        };
     }
 
     private string BuildRoleMention()
