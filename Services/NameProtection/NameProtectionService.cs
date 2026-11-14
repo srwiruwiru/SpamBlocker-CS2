@@ -88,14 +88,7 @@ public sealed class NameProtectionService(
     private void CheckExistingPlayers()
     {
         foreach (var player in PlayerUtils.GetValidPlayers())
-        {
-            if (string.IsNullOrEmpty(player.PlayerName))
-                continue;
-
-            var result = filterManager.CheckContent(player.PlayerName, player);
-            if (result.IsBlocked)
-                HandleViolation(player, result);
-        }
+            CheckPlayerName(player.Slot);
     }
 
     private void CheckPlayerName(int playerSlot)
