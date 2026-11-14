@@ -191,6 +191,20 @@ public static class Logger
 - Never commit `bin/`, `obj/`, `.superpowers/`, secrets or local configs.
 - **Plans and specs (`docs/superpowers/`) are never committed without explicit authorization**, every time. Write them, present them and wait for the yes before committing.
 - **Pushing always requires explicit confirmation**, every time. Never `push --force` and never rewrite already published commits.
+- A change that breaks compatibility for server owners is marked with `!` and a `BREAKING CHANGE:` footer: `feat(config)!: move debug toggle to root EnableDebug`.
+
+## Versioning
+- [Semantic Versioning](https://semver.org): `MAJOR.MINOR.PATCH`. `ModuleVersion` in `<Plugin>.cs` is the only place that holds the version and always matches the latest release.
+- The version is decided from the commits since the last release, from the server owner's point of view:
+
+| Bump | When |
+|---|---|
+| `MAJOR` | Anything a server owner must react to: a config key removed, renamed or with a new meaning, a removed command or permission, a higher minimum .NET or CounterStrikeSharp version, a behavior change of an existing option |
+| `MINOR` | New backwards-compatible features or options whose default keeps the previous behavior |
+| `PATCH` | Fixes and internal changes that need no action from the server owner |
+
+- The version is only bumped when preparing a release, in its own commit: `chore(release): bump version to 2.0.0`. Feature and fix commits never touch it.
+- Releases are named `<Plugin> vX.Y.Z`, keep the project's existing tag convention, and list breaking changes first. Creating a release publishes it, so it always requires explicit confirmation.
 
 ## Before considering a change done
 - [ ] Builds with no errors or warnings.
