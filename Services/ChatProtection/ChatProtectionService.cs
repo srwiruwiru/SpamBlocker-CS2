@@ -80,7 +80,7 @@ public sealed class ChatProtectionService(
     private void NotifyAdmins(CCSPlayerController player, FilterResult result, ViolationSource source)
     {
         var chatTypeKey = source == ViolationSource.TeamChat ? "team_chat" : "public_chat";
-        var actionText = Plugin.Localizer["admin_blocked_message", chatTypeKey];
+        var actionText = Plugin.Localizer["admin_blocked_message", Plugin.Localizer[chatTypeKey]];
         NotificationUtils.NotifyAdminsOfViolation(Plugin, new ViolationNotice(actionText, player.PlayerName, result));
     }
 
