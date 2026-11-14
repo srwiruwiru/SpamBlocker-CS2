@@ -36,22 +36,31 @@ Build: `dotnet build <Project>.csproj -c Release`
 ## Configuration
 - The config is the only way to enable or disable features. No console commands are created unless explicitly requested.
 - The config is split by type so every group of options is easy to find:
-  - **Base config** (`Configs/BaseConfig.cs`, class `<Plugin>Config`): holds `ConfigVersion`, plugin-wide standalone options and the list of sections. It never declares a section class.
+  - **Base config** (`Configs/BaseConfig.cs`, class `BaseConfig`): holds the list of sections, plugin-wide standalone options, `EnableDebug` and `ConfigVersion`. It never declares a section class.
   - **Sections** (`Configs/<Section>.cs`, class `<Section>Config`): every group of configurable options lives in its own file, one section per file.
 - Plain value lists (`List<string>` of words, domains, IPs) are regular options and stay in the config they belong to. What always moves out of the base config is a class that groups configurable options.
+- Order inside `BaseConfig`: sections first, then plugin-wide options, and always last `EnableDebug` followed by `ConfigVersion`.
 
 ```csharp
-public class <Plugin>Config : BasePluginConfig
+using System.Text.Json.Serialization;
+using CounterStrikeSharp.API.Core;
+
+namespace <Plugin>.Configs;
+
+public sealed class BaseConfig : BasePluginConfig
 {
+    [JsonPropertyName("Chat")]
+    public ChatConfig Chat { get; set; } = new();
+
+    [JsonPropertyName("EnableDebug")]
+    public bool EnableDebug { get; set; } = false;
+
     [JsonPropertyName("ConfigVersion")]
     public override int Version { get; set; } = 1;
-
-    [JsonPropertyName("Output")]
-    public OutputConfig Output { get; set; } = new();
 }
 ```
 
-- Always accessed as `Config.<Section>.<Option>` (`Config.Output.Enabled`).
+- Always accessed as `Config.<Section>.<Option>` (`Config.Chat.Enabled`).
 - Every property has `[JsonPropertyName]` and an explicit default value.
 - New JSON keys are `PascalCase` (`"ConfigVersion"`, `"Output"`).
 - Existing keys keep their name: renaming one breaks the configs already deployed on servers, so it is only done when explicitly requested.
@@ -112,6 +121,53 @@ Server.NextFrame(Stop);
 - Prefer the CounterStrikeSharp API over custom signatures or offsets. If there is no alternative, isolate them in a single file.
 - Every log goes through `Utils.Logger`, never through `Console` directly.
 - Third-party code (especially decompiled code) is only used to understand behavior: it is rewritten from scratch and never copied.
+
+## Logger
+`Utils/Logger.cs` is always this exact file, only replacing `<Plugin>`. It is the only place allowed to write to `Console`.
+
+```csharp
+using <Plugin>.Configs;
+
+namespace <Plugin>.Utils;
+
+public static class Logger
+{
+    private const string PluginName = "<Plugin>";
+    public static BaseConfig? Config { get; set; }
+
+    public static void LogInfo(string category, string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Green;
+        Console.WriteLine($"[{PluginName} - {category}] {message}");
+        Console.ResetColor();
+    }
+
+    public static void LogWarning(string category, string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Yellow;
+        Console.WriteLine($"[{PluginName} - {category}] {message}");
+        Console.ResetColor();
+    }
+
+    public static void LogError(string category, string message)
+    {
+        Console.ForegroundColor = ConsoleColor.Red;
+        Console.WriteLine($"[{PluginName} - {category}] {message}");
+        Console.ResetColor();
+    }
+
+    public static void LogDebug(string category, string message)
+    {
+        if (Config?.EnableDebug != true) return;
+        Console.ForegroundColor = ConsoleColor.Cyan;
+        Console.WriteLine($"[{PluginName} - {category}] {message}");
+        Console.ResetColor();
+    }
+}
+```
+
+- `Logger.Config` is assigned in `OnConfigParsed`, so `LogDebug` follows `EnableDebug`.
+- `category` is the feature or area that logs (`"Core"`, `"ChatProtection"`), kept in a `private const string LogCategory` of each class.
 
 ## Commits
 - [Conventional Commits](https://www.conventionalcommits.org) format: `type(scope): description`.
