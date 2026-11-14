@@ -12,14 +12,10 @@ namespace SpamBlocker.Managers
     public class FilterManager
     {
         private readonly BaseConfig _config;
-        private readonly BasePlugin _plugin;
-        private readonly HashSet<int> _renamedPlayers;
 
-        public FilterManager(BaseConfig config, BasePlugin plugin)
+        public FilterManager(BaseConfig config)
         {
             _config = config;
-            _plugin = plugin;
-            _renamedPlayers = new HashSet<int>();
             LoggingUtils.LogDebug("FilterManager initialized successfully", _config);
         }
 
@@ -367,150 +363,6 @@ namespace SpamBlocker.Managers
         {
             LoggingUtils.LogDebug($"Checking if IP '{ip}' is in IP whitelist", _config);
             return _config.IpFilter.WhitelistIps.Any(whitelistIp => string.Equals(whitelistIp.Trim(), ip, StringComparison.OrdinalIgnoreCase));
-        }
-
-        public void HandleNameViolation(CCSPlayerController player, FilterResult result)
-        {
-            if (!_config.NameProtection.Enabled || !PlayerUtils.IsValidPlayer(player))
-            {
-                LoggingUtils.LogDebug("Name protection disabled or invalid player", _config);
-                return;
-            }
-
-            LoggingUtils.LogDebug($"Handling name violation for {PlayerUtils.GetSafePlayerName(player)}: {result.Reason}", _config);
-
-            string newName = GenerateReplacementName(player);
-            bool renamed = RenamePlayerSafely(player, newName);
-            if (renamed)
-            {
-                _renamedPlayers.Add(player.Slot);
-                LoggingUtils.LogDebug($"Player {player.Slot} successfully renamed to '{newName}' and marked as renamed", _config);
-
-                if (_config.NameProtection.NotifyPlayer)
-                {
-                    var timer = new CounterStrikeSharp.API.Modules.Timers.Timer(0.5f, () =>
-                    {
-                        if (player.IsValid)
-                        {
-                            NotificationUtils.NotifyPlayer(player, _plugin.Localizer["name_changed"], _plugin);
-                        }
-                    });
-                }
-
-                if (_config.NameProtection.NotifyAdmins)
-                {
-                    NotificationUtils.NotifyAdminsOfViolation(
-                        _plugin,
-                        new ViolationNotice(_plugin.Localizer["admin_name_change"], newName, result));
-                }
-            }
-            else
-            {
-                LoggingUtils.LogError($"Failed to rename player {PlayerUtils.GetSafePlayerName(player)} to '{newName}'");
-            }
-        }
-
-        private string GenerateReplacementName(CCSPlayerController player)
-        {
-            string newName = _config.NameProtection.ReplacementName;
-            if (_config.NameProtection.AddUserIdSuffix && player.UserId.HasValue)
-            {
-                newName += $"_{player.UserId.Value}";
-                LoggingUtils.LogDebug($"Generated replacement name with userid suffix: '{newName}' for player {player.UserId.Value}", _config);
-            }
-            else if (_config.NameProtection.AddUserIdSuffix)
-            {
-                var random = new Random();
-                newName += $"_{random.Next(1000, 9999)}";
-                LoggingUtils.LogDebug($"Generated replacement name with random suffix (userid not available): '{newName}'", _config);
-            }
-
-            return newName;
-        }
-
-        private bool RenamePlayerSafely(CCSPlayerController player, string newName)
-        {
-            if (player == null || !player.IsValid || string.IsNullOrEmpty(newName))
-            {
-                LoggingUtils.LogDebug("Invalid parameters for renaming", _config);
-                return false;
-            }
-
-            try
-            {
-                string oldName = player.PlayerName;
-
-                Server.NextFrame(() =>
-                {
-                    try
-                    {
-                        if (player.IsValid)
-                        {
-                            player.PlayerName = newName;
-                            Utilities.SetStateChanged(player, "CBasePlayerController", "m_iszPlayerName");
-
-                            var @event = new EventNextlevelChanged(true);
-                            @event.FireEvent(false);
-
-                            LoggingUtils.LogDebug($"Player renamed with base controller and event: '{oldName}' -> '{newName}'", _config);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        LoggingUtils.LogError($"Error renaming player: {ex.Message}");
-                    }
-                });
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                LoggingUtils.LogError($"Error renaming player {PlayerUtils.GetSafePlayerName(player)} to '{newName}': {ex.Message}");
-                return false;
-            }
-        }
-
-        public void OnPlayerDisconnect(CCSPlayerController player)
-        {
-            if (PlayerUtils.IsValidPlayer(player))
-            {
-                _renamedPlayers.Remove(player.Slot);
-                LoggingUtils.LogDebug($"Cleaned up data for disconnected player slot {player.Slot}", _config);
-            }
-        }
-
-        public void ReapplyRenamedNames()
-        {
-            LoggingUtils.LogDebug("Checking for players with replaced names to reapply", _config);
-
-            foreach (int slot in _renamedPlayers.ToList())
-            {
-                var player = Utilities.GetPlayerFromSlot(slot);
-                if (PlayerUtils.IsValidPlayer(player))
-                {
-                    string expectedName = GenerateReplacementName(player!);
-                    if (player!.PlayerName != expectedName)
-                    {
-                        LoggingUtils.LogDebug($"Reapplying name '{expectedName}' to player {player.UserId} (current: '{player.PlayerName}')", _config);
-                        RenamePlayerSafely(player, expectedName);
-                    }
-                    else
-                    {
-                        LoggingUtils.LogDebug($"Player {player.UserId} already has correct name '{expectedName}'", _config);
-                    }
-                }
-                else
-                {
-                    _renamedPlayers.Remove(slot);
-                    LoggingUtils.LogDebug($"Removed invalid player slot {slot} from renamed players list", _config);
-                }
-            }
-        }
-
-        public void ClearCache()
-        {
-            _renamedPlayers.Clear();
-            LoggingUtils.LogDebug("FilterManager cache cleared", _config);
         }
     }
 

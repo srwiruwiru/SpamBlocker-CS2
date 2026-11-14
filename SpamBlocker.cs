@@ -2,144 +2,83 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 
-using SpamBlocker.Utils;
 using SpamBlocker.Configs;
 using SpamBlocker.Managers;
-using SpamBlocker.Models;
 using SpamBlocker.Services;
 using SpamBlocker.Services.ChatProtection;
 using SpamBlocker.Services.DiscordLogging;
-using EventHandler = SpamBlocker.Events.EventHandler;
+using SpamBlocker.Services.NameProtection;
 
 namespace SpamBlocker;
 
 [MinimumApiVersion(374)]
 public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
 {
+    private const string LogCategory = "Core";
+
     public override string ModuleName => "SpamBlocker";
     public override string ModuleVersion => "1.0.8";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Advanced spam and content filtering plugin with Discord integration";
 
     public BaseConfig Config { get; set; } = new();
-    private FilterManager? _filterManager;
-    private ChatProtectionService? _chatProtection;
-    private EventHandler? _eventHandler;
-    private DiscordLoggingService? _discordLogging;
-    private ViolationReporter? _violationReporter;
+
+    private readonly List<FeatureService> _features = [];
+    private NameProtectionService? _nameProtection;
 
     public void OnConfigParsed(BaseConfig config)
     {
         Config = config;
         Utils.Logger.Config = config;
-        LoggingUtils.LogInfo("Configuration parsed and loaded");
     }
 
     public override void Load(bool hotReload)
     {
-        LoggingUtils.LogInfo("SpamBlocker loading...");
-
-        InitializeServices();
-        RegisterAllEvents();
+        CreateFeatures();
 
         if (hotReload)
-        {
-            LoggingUtils.LogInfo("Hot reload detected - checking all existing players");
-            Server.NextFrame(CheckAllExistingPlayers);
-        }
+            Server.NextFrame(CheckExistingPlayerNames);
 
-        LoggingUtils.LogInfo("SpamBlocker loaded successfully!");
+        Utils.Logger.LogInfo(LogCategory, "Loaded");
     }
 
     public override void OnAllPluginsLoaded(bool hotReload)
     {
         if (hotReload)
-        {
-            Server.NextFrame(CheckAllExistingPlayers);
-        }
-    }
-
-    private void InitializeServices()
-    {
-        LoggingUtils.LogDebug("Initializing services...", Config);
-
-        _discordLogging = new DiscordLoggingService(new FeatureContext(this, Config));
-        if (_discordLogging.ShouldEnable())
-            _discordLogging.Enable();
-
-        _violationReporter = new ViolationReporter(Config, _discordLogging);
-        _filterManager = new FilterManager(Config, this);
-        _chatProtection = new ChatProtectionService(new FeatureContext(this, Config), _filterManager, _violationReporter);
-        if (Config.ChatProtection.Enabled)
-            _chatProtection.Enable();
-
-        _eventHandler = new EventHandler(_filterManager, _violationReporter, Config);
-
-        LoggingUtils.LogDebug("All services initialized successfully", Config);
-    }
-
-    private void RegisterAllEvents()
-    {
-        LoggingUtils.LogDebug("Registering all event handlers...", Config);
-
-        if (_eventHandler != null)
-        {
-            _eventHandler.RegisterEvents(this);
-            LoggingUtils.LogDebug("General events registered", Config);
-        }
-
-        LoggingUtils.LogDebug("All events registered successfully", Config);
-    }
-
-    private void CheckAllExistingPlayers()
-    {
-        if (_filterManager == null)
-        {
-            LoggingUtils.LogError("FilterManager is null - cannot check existing players");
-            return;
-        }
-
-        LoggingUtils.LogDebug("Checking all existing players for violations...", Config);
-
-        var players = Utilities.GetPlayers().Where(p => p != null && p.IsValid && !p.IsBot && !p.IsHLTV).ToList();
-        foreach (var player in players)
-        {
-            if (!string.IsNullOrEmpty(player.PlayerName))
-            {
-                var filterResult = _filterManager.CheckContent(player.PlayerName, player);
-                if (filterResult.IsBlocked)
-                {
-                    _filterManager.HandleNameViolation(player, filterResult);
-                    _violationReporter!.Report(player, ViolationSource.Name, filterResult);
-                }
-            }
-        }
-
-        LoggingUtils.LogDebug("Finished checking all existing players", Config);
+            Server.NextFrame(CheckExistingPlayerNames);
     }
 
     public override void Unload(bool hotReload)
     {
-        LoggingUtils.LogInfo("Unloading SpamBlocker...");
+        foreach (var feature in _features)
+            feature.Disable();
 
-        try
-        {
-            _filterManager?.ClearCache();
+        _features.Clear();
+        _nameProtection = null;
+        Utils.Logger.LogInfo(LogCategory, "Unloaded");
+    }
 
-            _chatProtection?.Disable();
-            _discordLogging?.Disable();
+    private void CreateFeatures()
+    {
+        var context = new FeatureContext(this, Config);
+        var discordLogging = new DiscordLoggingService(context);
+        var violationReporter = new ViolationReporter(Config, discordLogging);
+        var filterManager = new FilterManager(Config);
+        var chatProtection = new ChatProtectionService(context, filterManager, violationReporter);
+        _nameProtection = new NameProtectionService(context, filterManager, violationReporter);
+        _features.AddRange([discordLogging, chatProtection, _nameProtection]);
 
-            _violationReporter = null;
-            _filterManager = null;
-            _chatProtection = null;
-            _eventHandler = null;
-            _discordLogging = null;
+        if (discordLogging.ShouldEnable())
+            discordLogging.Enable();
 
-            LoggingUtils.LogInfo("SpamBlocker unloaded successfully");
-        }
-        catch (Exception ex)
-        {
-            LoggingUtils.LogError($"Error during SpamBlocker unload: {ex.Message}", ex);
-        }
+        if (Config.ChatProtection.Enabled)
+            chatProtection.Enable();
+
+        _nameProtection.Enable();
+    }
+
+    private void CheckExistingPlayerNames()
+    {
+        _nameProtection?.CheckExistingPlayers();
     }
 }
