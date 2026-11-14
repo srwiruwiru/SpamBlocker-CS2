@@ -6,6 +6,7 @@ using SpamBlocker.Utils;
 using SpamBlocker.Configs;
 using SpamBlocker.Managers;
 using SpamBlocker.Models;
+using SpamBlocker.Services;
 using SpamBlocker.Services.DiscordLogging;
 using EventHandler = SpamBlocker.Events.EventHandler;
 
@@ -61,7 +62,7 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
     {
         LoggingUtils.LogDebug("Initializing services...", Config);
 
-        _discordLogging = new DiscordLoggingService(this, Config);
+        _discordLogging = new DiscordLoggingService(new FeatureContext(this, Config));
         if (_discordLogging.ShouldEnable())
             _discordLogging.Enable();
 

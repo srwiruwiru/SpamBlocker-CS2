@@ -9,14 +9,14 @@ using Timer = CounterStrikeSharp.API.Modules.Timers.Timer;
 
 namespace SpamBlocker.Services;
 
-public abstract class FeatureService(BasePlugin plugin, BaseConfig config)
+public abstract class FeatureService(FeatureContext context)
 {
     private readonly List<Action> _unhookActions = [];
 
     public bool IsActive { get; private set; }
 
-    protected BasePlugin Plugin { get; } = plugin;
-    protected BaseConfig Config { get; } = config;
+    protected BasePlugin Plugin { get; } = context.Plugin;
+    protected BaseConfig Config { get; } = context.Config;
     protected abstract string LogCategory { get; }
 
     public void Enable()

@@ -1,17 +1,15 @@
 using System.Text;
-using CounterStrikeSharp.API.Core;
 
-using SpamBlocker.Configs;
 using SpamBlocker.Models;
 using SpamBlocker.Utils;
 
 namespace SpamBlocker.Services.DiscordLogging;
 
-public sealed class DiscordLoggingService(BasePlugin plugin, BaseConfig config) : FeatureService(plugin, config)
+public sealed class DiscordLoggingService(FeatureContext context) : FeatureService(context)
 {
     private const string JsonMediaType = "application/json";
 
-    private readonly DiscordEmbedBuilder _embedBuilder = new(plugin.Localizer, config.DiscordLogging);
+    private readonly DiscordEmbedBuilder _embedBuilder = new(context.Plugin.Localizer, context.Config.DiscordLogging);
     private HttpClient? _httpClient;
 
     protected override string LogCategory => "DiscordLogging";
