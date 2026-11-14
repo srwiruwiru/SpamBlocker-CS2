@@ -22,7 +22,7 @@ public sealed class DiscordLoggingService(FeatureContext context) : FeatureServi
     public async Task SendViolationAsync(ViolationReport report, string serverName)
     {
         var httpClient = _httpClient;
-        if (httpClient == null || !ShouldLogSource(report.Source)) return;
+        if (httpClient == null || !ShouldLogReport(report)) return;
 
         try
         {
@@ -51,13 +51,16 @@ public sealed class DiscordLoggingService(FeatureContext context) : FeatureServi
         _httpClient = null;
     }
 
-    private bool ShouldLogSource(ViolationSource source)
+    private bool ShouldLogReport(ViolationReport report)
     {
-        return source switch
+        if (report.Source == ViolationSource.Name)
+            return Config.DiscordLogging.LogNameViolations;
+
+        return report.Result.ViolationType switch
         {
-            ViolationSource.Chat or ViolationSource.TeamChat => Config.DiscordLogging.LogWordViolations,
-            ViolationSource.Name => Config.DiscordLogging.LogNameViolations,
-            _ => true
+            ViolationType.BlockedUrl => Config.DiscordLogging.LogUrlViolations,
+            ViolationType.BlockedIp => Config.DiscordLogging.LogIpViolations,
+            _ => Config.DiscordLogging.LogWordViolations
         };
     }
 }
