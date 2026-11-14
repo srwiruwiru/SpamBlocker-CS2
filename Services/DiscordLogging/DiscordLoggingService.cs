@@ -55,9 +55,7 @@ public sealed class DiscordLoggingService(FeatureContext context) : FeatureServi
     {
         return source switch
         {
-            ViolationSource.Chat => Config.DiscordLogging.LogWordViolations,
-            // BUG: Team chat violations follow LogNameViolations instead of LogWordViolations
-            ViolationSource.TeamChat => Config.DiscordLogging.LogNameViolations,
+            ViolationSource.Chat or ViolationSource.TeamChat => Config.DiscordLogging.LogWordViolations,
             ViolationSource.Name => Config.DiscordLogging.LogNameViolations,
             _ => true
         };
