@@ -61,6 +61,8 @@ SpamBlocker is an advanced filtering and protection system that provides compreh
 | `enabled`         | Enable/disable IP filtering. (**Default**: `true`)                                               | **YES**  |
 | `whitelist_ip_ports` | List of allowed IP:Port combinations. Only these specific combinations will be permitted. (**Default**: `["0.0.0.0:27060", "121.0.0.1:27015"]`) | **YES**  |
 
+Private, loopback, link-local, CGNAT, multicast and reserved addresses (such as `192.168.0.10` or `127.0.0.1`) are never blocked.
+
 ### Name Protection Configuration
 | Parameter         | Description                                                                                         | Required |
 |-------------------|-----------------------------------------------------------------------------------------------------|----------|

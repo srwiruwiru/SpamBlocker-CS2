@@ -30,7 +30,7 @@ public sealed class IpFilter(IpFilterConfig config) : IContentFilter
         foreach (Match match in ipPortMatches)
         {
             var ip = match.Value.Split(PortSeparator)[0];
-            if (ValidationUtils.IsValidIpAddress(ip) && !IsWhitelisted(match.Value, config.WhitelistIpPorts))
+            if (IsValidPublicAddress(ip) && !IsWhitelisted(match.Value, config.WhitelistIpPorts))
                 return match.Value;
         }
 
@@ -42,7 +42,7 @@ public sealed class IpFilter(IpFilterConfig config) : IContentFilter
         foreach (Match match in RegexUtils.IpRegex.Matches(content))
         {
             var ip = match.Value;
-            if (IsPartOfIpPort(ip, ipPortMatches) || !ValidationUtils.IsValidIpAddress(ip))
+            if (IsPartOfIpPort(ip, ipPortMatches) || !IsValidPublicAddress(ip))
                 continue;
 
             if (!IsWhitelisted(ip, config.WhitelistIps))
@@ -50,6 +50,11 @@ public sealed class IpFilter(IpFilterConfig config) : IContentFilter
         }
 
         return null;
+    }
+
+    private static bool IsValidPublicAddress(string ip)
+    {
+        return ValidationUtils.IsValidIpAddress(ip) && IpAddressUtils.IsPublicAddress(ip);
     }
 
     private static bool IsPartOfIpPort(string ip, MatchCollection ipPortMatches)
