@@ -2,19 +2,19 @@ using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 
+using SpamBlocker.Utils;
 using SpamBlocker.Configs;
 using SpamBlocker.Managers;
 using SpamBlocker.Services;
-using SpamBlocker.Utils;
 using EventHandler = SpamBlocker.Events.EventHandler;
 
 namespace SpamBlocker;
 
-[MinimumApiVersion(369)]
+[MinimumApiVersion(374)]
 public class SpamBlocker : BasePlugin, IPluginConfig<SpamBlockerConfig>
 {
     public override string ModuleName => "SpamBlocker";
-    public override string ModuleVersion => "1.0.7";
+    public override string ModuleVersion => "1.0.8";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Advanced spam and content filtering plugin with Discord integration";
 
