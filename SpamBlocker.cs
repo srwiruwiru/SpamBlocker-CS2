@@ -74,7 +74,8 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
         if (Config.ChatProtection.Enabled)
             chatProtection.Enable();
 
-        _nameProtection.Enable();
+        if (Config.NameProtection.Enabled)
+            _nameProtection.Enable();
     }
 
     private void CheckExistingPlayerNames()

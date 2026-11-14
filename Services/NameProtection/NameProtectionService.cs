@@ -28,6 +28,9 @@ public sealed class NameProtectionService(
 
     public void CheckExistingPlayers()
     {
+        if (!IsActive)
+            return;
+
         foreach (var player in PlayerUtils.GetValidPlayers())
         {
             if (string.IsNullOrEmpty(player.PlayerName))
@@ -113,9 +116,6 @@ public sealed class NameProtectionService(
 
     private void ReplacePlayerName(CCSPlayerController player, FilterResult result)
     {
-        if (!Config.NameProtection.Enabled)
-            return;
-
         var newName = BuildReplacementName(player);
         if (string.IsNullOrEmpty(newName))
         {
