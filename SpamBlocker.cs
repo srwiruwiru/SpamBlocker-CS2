@@ -7,6 +7,7 @@ using SpamBlocker.Configs;
 using SpamBlocker.Managers;
 using SpamBlocker.Models;
 using SpamBlocker.Services;
+using SpamBlocker.Services.ChatProtection;
 using SpamBlocker.Services.DiscordLogging;
 using EventHandler = SpamBlocker.Events.EventHandler;
 
@@ -22,7 +23,7 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
 
     public BaseConfig Config { get; set; } = new();
     private FilterManager? _filterManager;
-    private ChatManager? _chatManager;
+    private ChatProtectionService? _chatProtection;
     private EventHandler? _eventHandler;
     private DiscordLoggingService? _discordLogging;
     private ViolationReporter? _violationReporter;
@@ -68,7 +69,10 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
 
         _violationReporter = new ViolationReporter(Config, _discordLogging);
         _filterManager = new FilterManager(Config, this);
-        _chatManager = new ChatManager(_filterManager, _violationReporter, Config, this);
+        _chatProtection = new ChatProtectionService(new FeatureContext(this, Config), _filterManager, _violationReporter);
+        if (Config.ChatProtection.Enabled)
+            _chatProtection.Enable();
+
         _eventHandler = new EventHandler(_filterManager, _violationReporter, Config);
 
         LoggingUtils.LogDebug("All services initialized successfully", Config);
@@ -77,12 +81,6 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
     private void RegisterAllEvents()
     {
         LoggingUtils.LogDebug("Registering all event handlers...", Config);
-
-        if (_chatManager != null)
-        {
-            _chatManager.RegisterEvents(this);
-            LoggingUtils.LogDebug("Chat events registered", Config);
-        }
 
         if (_eventHandler != null)
         {
@@ -128,11 +126,12 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
         {
             _filterManager?.ClearCache();
 
+            _chatProtection?.Disable();
             _discordLogging?.Disable();
 
             _violationReporter = null;
             _filterManager = null;
-            _chatManager = null;
+            _chatProtection = null;
             _eventHandler = null;
             _discordLogging = null;
 

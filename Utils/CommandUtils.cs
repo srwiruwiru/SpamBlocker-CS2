@@ -10,7 +10,6 @@ public static class CommandUtils
     private const string SteamIdPlaceholder = "{steamid}";
     private const string NamePlaceholder = "{name}";
     private const string SlotPlaceholder = "{slot}";
-    private const string AdminCommandPrefix = "@";
 
     private static readonly string[] CommandPrefixes = ["!", "@", "/", "."];
 
@@ -42,10 +41,6 @@ public static class CommandUtils
         return false;
     }
 
-    public static bool IsAdminCommand(string message)
-    {
-        return message.StartsWith(AdminCommandPrefix, StringComparison.Ordinal);
-    }
 
     private static string SubstitutePlaceholders(string template, CCSPlayerController player)
     {
