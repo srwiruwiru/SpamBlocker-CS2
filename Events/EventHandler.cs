@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Modules.Entities;
 
 using SpamBlocker.Configs;
 using SpamBlocker.Managers;
+using SpamBlocker.Models;
 using SpamBlocker.Utils;
 
 namespace SpamBlocker.Events
@@ -11,11 +12,13 @@ namespace SpamBlocker.Events
     public class EventHandler
     {
         private readonly FilterManager _filterManager;
+        private readonly ViolationReporter _violationReporter;
         private readonly BaseConfig _config;
 
-        public EventHandler(FilterManager filterManager, BaseConfig config)
+        public EventHandler(FilterManager filterManager, ViolationReporter violationReporter, BaseConfig config)
         {
             _filterManager = filterManager;
+            _violationReporter = violationReporter;
             _config = config;
         }
 
@@ -141,7 +144,7 @@ namespace SpamBlocker.Events
                 _filterManager.HandleNameViolation(player, filterResult);
 
                 LoggingUtils.LogDebug($"Player name violation detected: {player.PlayerName} - {filterResult.Reason}", _config);
-                LoggingUtils.LogViolation(player, "Name", filterResult, _config);
+                _violationReporter.Report(player, ViolationSource.Name, filterResult);
             }
         }
     }

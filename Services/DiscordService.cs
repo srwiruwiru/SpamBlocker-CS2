@@ -20,14 +20,20 @@ namespace SpamBlocker.Services
             _httpClient = new HttpClient();
         }
 
-        public async Task SendViolationToDiscord(DiscordViolationData violationData)
+        public async Task SendViolationAsync(ViolationReport report, string serverName)
         {
             try
             {
-                if (!_config.DiscordLogging.Enabled || string.IsNullOrEmpty(_config.DiscordLogging.WebhookUrl))
+                var violationData = new
                 {
-                    return;
-                }
+                    PlayerName = CleanPlayerName(report.PlayerName),
+                    report.SteamId,
+                    ServerName = serverName,
+                    ViolationType = report.Source.ToString(),
+                    report.Result.Reason,
+                    report.Result.DetectedContent,
+                    report.Timestamp
+                };
 
                 if (!ShouldLogViolationType(violationData.ViolationType))
                 {
@@ -93,6 +99,16 @@ namespace SpamBlocker.Services
             {
                 Console.WriteLine($"[SpamBlocker] Error sending violation to Discord: {ex.Message}");
             }
+        }
+
+        private static string CleanPlayerName(string playerName)
+        {
+            return playerName
+                .Replace("[Ready]", "")
+                .Replace("[No Ready]", "")
+                .Replace("[READY]", "")
+                .Replace("[NOT READY]", "")
+                .Trim();
         }
 
         private string GetLocalizedText(string key, string fallback)

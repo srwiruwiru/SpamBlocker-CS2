@@ -5,6 +5,7 @@ using CounterStrikeSharp.API.Core.Attributes;
 using SpamBlocker.Utils;
 using SpamBlocker.Configs;
 using SpamBlocker.Managers;
+using SpamBlocker.Models;
 using SpamBlocker.Services;
 using EventHandler = SpamBlocker.Events.EventHandler;
 
@@ -23,20 +24,13 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
     private ChatManager? _chatManager;
     private EventHandler? _eventHandler;
     private DiscordService? _discordService;
+    private ViolationReporter? _violationReporter;
 
     public void OnConfigParsed(BaseConfig config)
     {
         Config = config;
         Utils.Logger.Config = config;
         LoggingUtils.LogInfo("Configuration parsed and loaded");
-
-        if (_discordService != null)
-        {
-            _discordService.Dispose();
-            _discordService = null;
-        }
-
-        InitializeDiscordService();
     }
 
     public override void Load(bool hotReload)
@@ -69,9 +63,10 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
 
         InitializeDiscordService();
 
+        _violationReporter = new ViolationReporter(Config, _discordService);
         _filterManager = new FilterManager(Config, this);
-        _chatManager = new ChatManager(_filterManager, Config, this);
-        _eventHandler = new EventHandler(_filterManager, Config);
+        _chatManager = new ChatManager(_filterManager, _violationReporter, Config, this);
+        _eventHandler = new EventHandler(_filterManager, _violationReporter, Config);
 
         LoggingUtils.LogDebug("All services initialized successfully", Config);
     }
@@ -81,12 +76,10 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
         if (Config.DiscordLogging.Enabled && !string.IsNullOrEmpty(Config.DiscordLogging.WebhookUrl))
         {
             _discordService = new DiscordService(Config, Localizer);
-            LoggingUtils.SetDiscordService(_discordService);
             LoggingUtils.LogInfo("Discord logging service initialized");
         }
         else
         {
-            LoggingUtils.SetDiscordService(null);
             LoggingUtils.LogDebug("Discord logging disabled", Config);
         }
     }
@@ -129,7 +122,7 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
                 if (filterResult.IsBlocked)
                 {
                     _filterManager.HandleNameViolation(player, filterResult);
-                    LoggingUtils.LogViolation(player, "Name", filterResult, Config);
+                    _violationReporter!.Report(player, ViolationSource.Name, filterResult);
                 }
             }
         }
@@ -146,8 +139,8 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
             _filterManager?.ClearCache();
 
             _discordService?.Dispose();
-            LoggingUtils.SetDiscordService(null);
 
+            _violationReporter = null;
             _filterManager = null;
             _chatManager = null;
             _eventHandler = null;

@@ -4,6 +4,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Admin;
 
 using SpamBlocker.Configs;
+using SpamBlocker.Models;
 using SpamBlocker.Utils;
 
 namespace SpamBlocker.Managers
@@ -11,12 +12,14 @@ namespace SpamBlocker.Managers
     public class ChatManager
     {
         private readonly FilterManager _filterManager;
+        private readonly ViolationReporter _violationReporter;
         private readonly BaseConfig _config;
         private readonly BasePlugin _plugin;
 
-        public ChatManager(FilterManager filterManager, BaseConfig config, BasePlugin plugin)
+        public ChatManager(FilterManager filterManager, ViolationReporter violationReporter, BaseConfig config, BasePlugin plugin)
         {
             _filterManager = filterManager;
+            _violationReporter = violationReporter;
             _config = config;
             _plugin = plugin;
         }
@@ -157,7 +160,6 @@ namespace SpamBlocker.Managers
         private void HandleChatViolation(CCSPlayerController player, string message, FilterResult filterResult, bool isTeamChat)
         {
             var chatType = isTeamChat ? "team chat" : "public chat";
-            string violationType = isTeamChat ? "TeamChat" : "Chat";
             LoggingUtils.LogDebug($"{chatType} violation by {player.PlayerName}: '{message}' - {filterResult.Reason}", _config);
 
             if (_config.ChatProtection.NotifyPlayer)
@@ -171,15 +173,8 @@ namespace SpamBlocker.Managers
                 NotificationUtils.NotifyAdminsViolation(player.PlayerName, _plugin.Localizer["admin_blocked_message", chatTypeKey], filterResult.Reason, filterResult.DetectedContent, _plugin);
             }
 
-            var playerInfo = new
-            {
-                Name = player.PlayerName,
-                SteamId = player.AuthorizedSteamID?.SteamId64.ToString() ?? "Unknown",
-                player.Slot,
-                player.UserId
-            };
-
-            LoggingUtils.LogViolation(player, violationType, filterResult, _config, playerInfo);
+            var source = isTeamChat ? ViolationSource.TeamChat : ViolationSource.Chat;
+            _violationReporter.Report(player, source, filterResult);
             ExecuteChatAction(player, filterResult);
         }
 
