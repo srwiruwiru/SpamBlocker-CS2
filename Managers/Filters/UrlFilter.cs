@@ -10,9 +10,6 @@ public sealed class UrlFilter(UrlFilterConfig config) : IContentFilter
 {
     private const string LogCategory = "UrlFilter";
     private const string WhitelistMode = "whitelist";
-    private const string ProtocolNotAllowedReason = "Protocol not allowed";
-    private const string DomainNotWhitelistedReason = "Domain not in whitelist";
-    private const string DomainBlacklistedReason = "Domain in blacklist";
 
     public FilterResult Check(string content)
     {
@@ -36,12 +33,12 @@ public sealed class UrlFilter(UrlFilterConfig config) : IContentFilter
             return FilterResult.Allowed;
 
         if (!ValidationUtils.IsAllowedProtocol(url, config.AllowedProtocols))
-            return Block(ProtocolNotAllowedReason, url);
+            return Block(BlockReason.ProtocolNotAllowed, url);
 
         if (IsWhitelistMode())
-            return ValidationUtils.IsInDomainList(domain, config.Whitelist) ? FilterResult.Allowed : Block(DomainNotWhitelistedReason, url);
+            return ValidationUtils.IsInDomainList(domain, config.Whitelist) ? FilterResult.Allowed : Block(BlockReason.DomainNotWhitelisted, url);
 
-        return ValidationUtils.IsInDomainList(domain, config.Blacklist) ? Block(DomainBlacklistedReason, url) : FilterResult.Allowed;
+        return ValidationUtils.IsInDomainList(domain, config.Blacklist) ? Block(BlockReason.DomainBlacklisted, url) : FilterResult.Allowed;
     }
 
     private bool IsWhitelistMode()
@@ -49,7 +46,7 @@ public sealed class UrlFilter(UrlFilterConfig config) : IContentFilter
         return string.Equals(config.FilterMode, WhitelistMode, StringComparison.OrdinalIgnoreCase);
     }
 
-    private static FilterResult Block(string reason, string url)
+    private static FilterResult Block(BlockReason reason, string url)
     {
         Logger.LogDebug(LogCategory, $"'{url}' blocked: {reason}");
         return FilterResult.Blocked(ViolationType.BlockedUrl, reason, url);

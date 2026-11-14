@@ -21,8 +21,9 @@ public static class NotificationUtils
 
     public static void NotifyAdminsOfViolation(BasePlugin plugin, ViolationNotice notice)
     {
+        var reason = plugin.Localizer[BlockReasonUtils.GetLangKey(notice.Result.Reason)];
         var message = $"{notice.ActionText} {plugin.Localizer["violation_by"]} {notice.PlayerName}: " +
-                      $"{notice.Result.Reason} ('{notice.Result.DetectedContent}')";
+                      $"{reason} ('{notice.Result.DetectedContent}')";
         NotifyAdmins(plugin, message);
     }
 

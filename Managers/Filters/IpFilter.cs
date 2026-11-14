@@ -9,8 +9,6 @@ namespace SpamBlocker.Managers.Filters;
 public sealed class IpFilter(IpFilterConfig config) : IContentFilter
 {
     private const string LogCategory = "IpFilter";
-    private const string IpPortNotWhitelistedReason = "IP:Port not in whitelist";
-    private const string IpNotWhitelistedReason = "IP address not in whitelist";
     private const char PortSeparator = ':';
 
     public FilterResult Check(string content)
@@ -21,10 +19,10 @@ public sealed class IpFilter(IpFilterConfig config) : IContentFilter
         var ipPortMatches = RegexUtils.IpPortRegex.Matches(content);
         var blockedIpPort = FindBlockedIpPort(ipPortMatches);
         if (blockedIpPort != null)
-            return Block(IpPortNotWhitelistedReason, blockedIpPort);
+            return Block(BlockReason.IpPortNotWhitelisted, blockedIpPort);
 
         var blockedIp = FindBlockedIp(content, ipPortMatches);
-        return blockedIp == null ? FilterResult.Allowed : Block(IpNotWhitelistedReason, blockedIp);
+        return blockedIp == null ? FilterResult.Allowed : Block(BlockReason.IpNotWhitelisted, blockedIp);
     }
 
     private string? FindBlockedIpPort(MatchCollection ipPortMatches)
@@ -76,7 +74,7 @@ public sealed class IpFilter(IpFilterConfig config) : IContentFilter
         return false;
     }
 
-    private static FilterResult Block(string reason, string detectedContent)
+    private static FilterResult Block(BlockReason reason, string detectedContent)
     {
         Logger.LogDebug(LogCategory, $"'{detectedContent}' blocked: {reason}");
         return FilterResult.Blocked(ViolationType.BlockedIp, reason, detectedContent);

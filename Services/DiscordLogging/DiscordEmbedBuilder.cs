@@ -4,6 +4,7 @@ using Microsoft.Extensions.Localization;
 
 using SpamBlocker.Configs;
 using SpamBlocker.Models;
+using SpamBlocker.Utils;
 
 namespace SpamBlocker.Services.DiscordLogging;
 
@@ -62,7 +63,7 @@ public sealed class DiscordEmbedBuilder(IStringLocalizer localizer, DiscordLoggi
         [
             new { name = $"{PlayerIcon} {GetText("discord_player")}", value = playerValue, inline = false },
             new { name = $"{ViolationTypeIcon} {GetText("discord_violation_type")}", value = GetSourceLabel(report.Source), inline = true },
-            new { name = $"{ReasonIcon} {GetText("discord_reason")}", value = report.Result.Reason, inline = true },
+            new { name = $"{ReasonIcon} {GetText("discord_reason")}", value = GetText(BlockReasonUtils.GetLangKey(report.Result.Reason)), inline = true },
             new { name = $"{DetectedContentIcon} {GetText("discord_detected_content")}", value = $"`{report.Result.DetectedContent}`", inline = false }
         ];
     }

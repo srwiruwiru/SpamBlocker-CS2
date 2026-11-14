@@ -28,5 +28,15 @@
   "discord_violation_blocked_url": "Blocked URL",
   "discord_violation_blocked_ip": "Blocked IP",
   "discord_violation_blacklisted_name": "Blacklisted Name",
-  "discord_violation_name": "Name Violation"
+  "discord_violation_name": "Name Violation",
+
+  "reason_blacklisted_word": "Blacklisted word detected",
+  "reason_ip_port_not_whitelisted": "IP:Port not in whitelist",
+  "reason_ip_not_whitelisted": "IP address not in whitelist",
+  "reason_protocol_not_allowed": "Protocol not allowed",
+  "reason_domain_not_whitelisted": "Domain not in whitelist",
+  "reason_domain_blacklisted": "Domain in blacklist",
+  "reason_name_too_short": "Name too short",
+  "reason_name_too_long": "Name too long",
+  "reason_blacklisted_name": "Blacklisted name detected"
 }

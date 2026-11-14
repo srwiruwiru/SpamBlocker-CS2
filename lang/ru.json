@@ -28,5 +28,15 @@
   "discord_violation_blocked_url": "Заблокированный URL",
   "discord_violation_blocked_ip": "Заблокированный IP",
   "discord_violation_blacklisted_name": "Запрещенное Имя",
-  "discord_violation_name": "Нарушение Имени"
+  "discord_violation_name": "Нарушение Имени",
+
+  "reason_blacklisted_word": "Обнаружено запрещенное слово",
+  "reason_ip_port_not_whitelisted": "IP:порт не в белом списке",
+  "reason_ip_not_whitelisted": "IP-адрес не в белом списке",
+  "reason_protocol_not_allowed": "Протокол не разрешен",
+  "reason_domain_not_whitelisted": "Домен не в белом списке",
+  "reason_domain_blacklisted": "Домен в черном списке",
+  "reason_name_too_short": "Слишком короткое имя",
+  "reason_name_too_long": "Слишком длинное имя",
+  "reason_blacklisted_name": "Обнаружено запрещенное имя"
 }

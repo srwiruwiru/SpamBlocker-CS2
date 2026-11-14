@@ -7,9 +7,6 @@ namespace SpamBlocker.Managers.Filters;
 public sealed class NameBlacklistFilter(NameBlacklistConfig config)
 {
     private const string LogCategory = "NameBlacklistFilter";
-    private const string NameTooShortReason = "Name too short";
-    private const string NameTooLongReason = "Name too long";
-    private const string BlacklistedNameReason = "Blacklisted name detected";
 
     private readonly StringComparison _comparison = config.CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
 
@@ -19,13 +16,13 @@ public sealed class NameBlacklistFilter(NameBlacklistConfig config)
             return FilterResult.Allowed;
 
         if (playerName.Length < config.MinNameLength)
-            return Block(NameTooShortReason, playerName);
+            return Block(BlockReason.NameTooShort, playerName);
 
         if (playerName.Length > config.MaxNameLength)
-            return Block(NameTooLongReason, playerName);
+            return Block(BlockReason.NameTooLong, playerName);
 
         var blacklistedName = FindBlacklistedName(playerName.Trim());
-        return blacklistedName == null ? FilterResult.Allowed : Block(BlacklistedNameReason, blacklistedName);
+        return blacklistedName == null ? FilterResult.Allowed : Block(BlockReason.BlacklistedName, blacklistedName);
     }
 
     private string? FindBlacklistedName(string playerName)
@@ -54,7 +51,7 @@ public sealed class NameBlacklistFilter(NameBlacklistConfig config)
         return !string.Equals(nameWithoutNumbers, blacklistedName, _comparison);
     }
 
-    private static FilterResult Block(string reason, string detectedContent)
+    private static FilterResult Block(BlockReason reason, string detectedContent)
     {
         Logger.LogDebug(LogCategory, $"'{detectedContent}' blocked: {reason}");
         return FilterResult.Blocked(ViolationType.BlacklistedName, reason, detectedContent);
