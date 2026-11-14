@@ -4,6 +4,9 @@ namespace SpamBlocker.Utils;
 
 public static class IpAddressUtils
 {
+    private const char OctetSeparator = '.';
+    private const int SingleDigitLength = 1;
+
     private static readonly IPNetwork[] NonPublicNetworks =
     [
         IPNetwork.Parse("0.0.0.0/8"),
@@ -25,6 +28,18 @@ public static class IpAddressUtils
         foreach (var network in NonPublicNetworks)
         {
             if (network.Contains(address))
+                return false;
+        }
+
+        return true;
+    }
+
+    // NOTE: Versions like "1.1.8.1" are valid addresses; real server addresses almost never have only single-digit octets
+    public static bool IsVersionNumberLike(string ip)
+    {
+        foreach (var octet in ip.Split(OctetSeparator))
+        {
+            if (octet.Length > SingleDigitLength)
                 return false;
         }
 

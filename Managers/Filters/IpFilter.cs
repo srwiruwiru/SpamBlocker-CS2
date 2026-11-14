@@ -42,7 +42,7 @@ public sealed class IpFilter(IpFilterConfig config) : IContentFilter
         foreach (Match match in RegexUtils.IpRegex.Matches(content))
         {
             var ip = match.Value;
-            if (IsPartOfIpPort(ip, ipPortMatches) || !IsValidPublicAddress(ip))
+            if (IsPartOfIpPort(ip, ipPortMatches) || !IsValidPublicAddress(ip) || IpAddressUtils.IsVersionNumberLike(ip))
                 continue;
 
             if (!IsWhitelisted(ip, config.WhitelistIps))
