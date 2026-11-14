@@ -1,5 +1,3 @@
-using SpamBlocker.Managers;
-
 namespace SpamBlocker.Models;
 
 public sealed record ViolationReport(
