@@ -101,7 +101,7 @@ namespace SpamBlocker.Utils
 
         public static void LogDebug(string message, BaseConfig config)
         {
-            if (config.Settings.DebugMode)
+            if (config.EnableDebug)
             {
                 Server.PrintToConsole($"[SpamBlocker] DEBUG: {message}");
             }

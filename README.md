@@ -21,7 +21,8 @@ SpamBlocker is an advanced filtering and protection system that provides compreh
 | `NameProtection`  | Player name filtering and automatic renaming for violations with individual blacklist support.   | **YES**  |
 | `ChatProtection`  | Chat message filtering with configurable actions (block, kick, ban).                            | **YES**  |
 | `DiscordLogging`  | **NEW**: Discord webhook integration for real-time violation logging.                           | **NO**   |
-| `Settings`        | General plugin settings including admin bypass and debug mode.                                   | **YES**  |
+| `Settings`        | General plugin settings including admin bypass.                                                  | **YES**  |
+| `EnableDebug`     | Enable detailed logging for troubleshooting. (**Default**: `false`)                              | **YES**  |
 
 ### Discord Logging Configuration (NEW)
 | Parameter         | Description                                                                                         | Required |
@@ -98,7 +99,6 @@ SpamBlocker is an advanced filtering and protection system that provides compreh
 |------------------------|------------------------------------------------------------------------------------------------|----------|
 | `AdminBypass`          | Allow admins to bypass all filters. (**Default**: `false`)                                   | **YES**  |
 | `AdminBypassPermission` | Permission flag required for admin bypass. (**Default**: `"@css/generic"`)                  | **YES**  |
-| `DebugMode`            | Enable detailed logging for troubleshooting. (**Default**: `false`)                         | **YES**  |
 
 ---
 
