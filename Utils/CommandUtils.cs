@@ -7,7 +7,7 @@ namespace SpamBlocker.Utils
 {
     public static class CommandUtils
     {
-        public static void ExecuteCommand(string commandTemplate, CCSPlayerController player, SpamBlockerConfig config)
+        public static void ExecuteCommand(string commandTemplate, CCSPlayerController player, BaseConfig config)
         {
             if (string.IsNullOrEmpty(commandTemplate) || player == null || !player.IsValid)
                 return;

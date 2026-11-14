@@ -10,7 +10,7 @@ namespace SpamBlocker.Managers
 {
     public class FilterManager
     {
-        private readonly SpamBlockerConfig _config;
+        private readonly BaseConfig _config;
         private readonly BasePlugin _plugin;
         private readonly HashSet<int> _renamedPlayers;
 
@@ -18,7 +18,7 @@ namespace SpamBlocker.Managers
         private readonly Dictionary<int, string> _lastViolationType;
         private readonly TimeSpan _violationCooldown = TimeSpan.FromSeconds(5);
 
-        public FilterManager(SpamBlockerConfig config, BasePlugin plugin)
+        public FilterManager(BaseConfig config, BasePlugin plugin)
         {
             _config = config;
             _plugin = plugin;

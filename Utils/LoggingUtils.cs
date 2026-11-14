@@ -17,7 +17,7 @@ namespace SpamBlocker.Utils
             _discordService = discordService;
         }
 
-        public static void LogViolation(CCSPlayerController player, string type, FilterResult filterResult, SpamBlockerConfig config, object? playerInfo = null)
+        public static void LogViolation(CCSPlayerController player, string type, FilterResult filterResult, BaseConfig config, object? playerInfo = null)
         {
             if (config.ChatProtection.LogViolations)
             {
@@ -52,7 +52,7 @@ namespace SpamBlocker.Utils
             }
         }
 
-        private static string GetSafeServerName(SpamBlockerConfig config)
+        private static string GetSafeServerName(BaseConfig config)
         {
             try
             {
@@ -99,7 +99,7 @@ namespace SpamBlocker.Utils
             }
         }
 
-        public static void LogDebug(string message, SpamBlockerConfig config)
+        public static void LogDebug(string message, BaseConfig config)
         {
             if (config.Settings.DebugMode)
             {

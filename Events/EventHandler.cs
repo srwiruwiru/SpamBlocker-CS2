@@ -11,9 +11,9 @@ namespace SpamBlocker.Events
     public class EventHandler
     {
         private readonly FilterManager _filterManager;
-        private readonly SpamBlockerConfig _config;
+        private readonly BaseConfig _config;
 
-        public EventHandler(FilterManager filterManager, SpamBlockerConfig config)
+        public EventHandler(FilterManager filterManager, BaseConfig config)
         {
             _filterManager = filterManager;
             _config = config;

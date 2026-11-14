@@ -9,11 +9,11 @@ namespace SpamBlocker.Services
 {
     public class DiscordService : IDisposable
     {
-        private readonly SpamBlockerConfig _config;
+        private readonly BaseConfig _config;
         private readonly HttpClient _httpClient;
         private readonly IStringLocalizer _localizer;
 
-        public DiscordService(SpamBlockerConfig config, IStringLocalizer localizer)
+        public DiscordService(BaseConfig config, IStringLocalizer localizer)
         {
             _config = config;
             _localizer = localizer;

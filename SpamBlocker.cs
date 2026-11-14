@@ -11,20 +11,20 @@ using EventHandler = SpamBlocker.Events.EventHandler;
 namespace SpamBlocker;
 
 [MinimumApiVersion(374)]
-public class SpamBlocker : BasePlugin, IPluginConfig<SpamBlockerConfig>
+public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
 {
     public override string ModuleName => "SpamBlocker";
     public override string ModuleVersion => "1.0.8";
     public override string ModuleAuthor => "luca.uy";
     public override string ModuleDescription => "Advanced spam and content filtering plugin with Discord integration";
 
-    public SpamBlockerConfig Config { get; set; } = new();
+    public BaseConfig Config { get; set; } = new();
     private FilterManager? _filterManager;
     private ChatManager? _chatManager;
     private EventHandler? _eventHandler;
     private DiscordService? _discordService;
 
-    public void OnConfigParsed(SpamBlockerConfig config)
+    public void OnConfigParsed(BaseConfig config)
     {
         Config = config;
         LoggingUtils.LogInfo("Configuration parsed and loaded");

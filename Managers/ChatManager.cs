@@ -11,10 +11,10 @@ namespace SpamBlocker.Managers
     public class ChatManager
     {
         private readonly FilterManager _filterManager;
-        private readonly SpamBlockerConfig _config;
+        private readonly BaseConfig _config;
         private readonly BasePlugin _plugin;
 
-        public ChatManager(FilterManager filterManager, SpamBlockerConfig config, BasePlugin plugin)
+        public ChatManager(FilterManager filterManager, BaseConfig config, BasePlugin plugin)
         {
             _filterManager = filterManager;
             _config = config;
