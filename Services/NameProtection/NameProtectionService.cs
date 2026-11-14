@@ -26,20 +26,9 @@ public sealed class NameProtectionService(
 
     protected override string LogCategory => "NameProtection";
 
-    public void CheckExistingPlayers()
+    public void ScheduleExistingPlayersCheck()
     {
-        if (!IsActive)
-            return;
-
-        foreach (var player in PlayerUtils.GetValidPlayers())
-        {
-            if (string.IsNullOrEmpty(player.PlayerName))
-                continue;
-
-            var result = filterManager.CheckContent(player.PlayerName, player);
-            if (result.IsBlocked)
-                HandleViolation(player, result);
-        }
+        RunNextFrame(CheckExistingPlayers);
     }
 
     protected override void OnEnable()
@@ -94,6 +83,19 @@ public sealed class NameProtectionService(
             RunAfter(PlayerEventReapplyDelaySeconds, ReapplyReplacementNames);
 
         return HookResult.Continue;
+    }
+
+    private void CheckExistingPlayers()
+    {
+        foreach (var player in PlayerUtils.GetValidPlayers())
+        {
+            if (string.IsNullOrEmpty(player.PlayerName))
+                continue;
+
+            var result = filterManager.CheckContent(player.PlayerName, player);
+            if (result.IsBlocked)
+                HandleViolation(player, result);
+        }
     }
 
     private void CheckPlayerName(int playerSlot)

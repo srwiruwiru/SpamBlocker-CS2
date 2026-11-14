@@ -1,4 +1,3 @@
-using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes;
 
@@ -37,15 +36,9 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
         CreateFeatures();
 
         if (hotReload)
-            Server.NextFrame(CheckExistingPlayerNames);
+            _nameProtection?.ScheduleExistingPlayersCheck();
 
         Utils.Logger.LogInfo(LogCategory, "Loaded");
-    }
-
-    public override void OnAllPluginsLoaded(bool hotReload)
-    {
-        if (hotReload)
-            Server.NextFrame(CheckExistingPlayerNames);
     }
 
     public override void Unload(bool hotReload)
@@ -76,10 +69,5 @@ public class SpamBlocker : BasePlugin, IPluginConfig<BaseConfig>
 
         if (Config.NameProtection.Enabled)
             _nameProtection.Enable();
-    }
-
-    private void CheckExistingPlayerNames()
-    {
-        _nameProtection?.CheckExistingPlayers();
     }
 }
